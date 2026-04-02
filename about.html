@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À propos - MR PAPRIKA</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="about.html">À propos</a></li>
+            </ul>
+        </nav>
+        <h1>À propos de MR PAPRIKA</h1>
+    </header>
+    <main>
+        <p>Ce site web est dédié à MR PAPRIKA, créé pour démontrer les bases du développement web avec HTML, CSS et JavaScript.</p>
+        <p>Il inclut une navigation, des styles améliorés et de l'interactivité.</p>
+
+        <section class="owner-contact">
+            <h3>Coordonnées du propriétaire</h3>
+            <form id="owner-form">
+                <div>
+                    <label for="owner-name">Nom :</label>
+                    <input type="text" id="owner-name" placeholder="Nom du propriétaire" required>
+                </div>
+                <div>
+                    <label for="owner-email">Email :</label>
+                    <input type="email" id="owner-email" placeholder="email@exemple.com" required>
+                </div>
+                <div>
+                    <label for="owner-phone">Téléphone :</label>
+                    <input type="tel" id="owner-phone" placeholder="+33 6 12 34 56 78" required>
+                </div>
+                <div>
+                    <label for="owner-address">Adresse :</label>
+                    <input type="text" id="owner-address" placeholder="Adresse" required>
+                </div>
+                <div>
+                    <label for="owner-map">Lien Google Maps (optionnel) :</label>
+                    <input type="url" id="owner-map" placeholder="https://www.google.com/maps/embed?..." >
+                </div>
+                <div>
+                    <label for="owner-whatsapp">Lien WhatsApp (optionnel) :</label>
+                    <input type="url" id="owner-whatsapp" placeholder="https://wa.me/..." >
+                </div>
+                <div>
+                    <label for="owner-tiktok">Lien TikTok (optionnel) :</label>
+                    <input type="url" id="owner-tiktok" placeholder="https://tiktok.com/..." >
+                </div>
+                <div>
+                    <label for="owner-instagram">Lien Instagram (optionnel) :</label>
+                    <input type="url" id="owner-instagram" placeholder="https://instagram.com/..." >
+                </div>
+                <div>
+                    <label for="owner-facebook">Lien Facebook (optionnel) :</label>
+                    <input type="url" id="owner-facebook" placeholder="https://facebook.com/..." >
+                </div>
+                <button type="submit">Sauvegarder les coordonnées</button>
+            </form>
+            <p id="owner-status"></p>
+        </section>
+
+        <section class="owner-notifications">
+            <h3>Notifications de Commandes</h3>
+            <p id="order-notification-count">Aucune nouvelle commande.</p>
+            <ul id="order-notifications-list"></ul>
+            <button id="clear-order-notifications">Marquer toutes comme lues</button>
+        </section>
+
+        <section class="owner-chat">
+            <h3>Messages des Clients</h3>
+            <div id="owner-chat-messages"></div>
+            <button id="clear-chat">Effacer tous les messages</button>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 MR PAPRIKA</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>MR PAPRIKA - Site Officiel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+    <header>
+        <nav>
+            <button id="menu-toggle" aria-label="Ouvrir le menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul id="nav-links">
+                <li><a href="#hero" title="Accueil"><i class="fas fa-pizza-slice"></i><span>Accueil</span></a></li>
+                <li><a href="#menu" title="Commander"><i class="fas fa-shopping-cart"></i><span>Commander</span></a></li>
+                <li><a href="#location" title="Nous trouver"><i class="fas fa-map-marker-alt"></i><span>Localisation</span></a></li>
+                <li><a href="#chat" title="Contact"><i class="fas fa-envelope"></i><span>Contact</span></a></li>
+                <li><a href="about.html" title="À propos"><i class="fas fa-info-circle"></i><span>À propos</span><span id="order-notifications-badge" class="badge" aria-label="Notifications de commandes">0</span></a></li>
+            </ul>
+        </nav>
+        <h1>MR PAPRIKA</h1>
+        <p class="tagline">Pizza artisanale • Service express • Livraison rapide</p>
+    </header>
+    <main id="main-content">
+        <section class="hero" aria-label="Présentation MR PAPRIKA">
+            <h2>Pizza artisanale, service express</h2>
+            <p>Commandez en quelques clics, suivez vos commandes et discutez avec nous instantanément.</p>
+            <a href="#menu" class="cta-button">Voir le menu</a>
+        </section>
+
+        <details id="menu" class="accordion-section" open>
+            <summary><i class="fas fa-pizza-slice"></i> Notre Menu</summary>
+            <div class="section-content">
+                <div class="menu-intro">
+                    <h3>Découvrez nos pizzas artisanales</h3>
+                    <p>Choisissez votre pizza préférée et personnalisez-la selon vos goûts</p>
+                </div>
+                <div class="pizza-cards" id="pizza-gallery"></div>
+                <form id="pizza-form">
+                    <div class="form-group">
+                        <label for="type">Choisissez votre pizza :</label>
+                        <select id="type">
+                            <option value="margherita">Margherita</option>
+                            <option value="pepperoni">Pepperoni</option>
+                            <option value="vegetarienne">Végétarienne</option>
+                            <option value="quatre-fromages">Quatre Fromages</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="size">Taille :</label>
+                            <select id="size">
+                                <option value="small">Petite (25cm)</option>
+                                <option value="medium">Moyenne (30cm)</option>
+                                <option value="large">Moyenne (30cm)</option>
+                                <option value="large">Grande (35cm)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <fieldset class="delivery-options">
+                        <legend><i class="fas fa-truck"></i> Mode de livraison</legend>
+                        <div class="option-cards">
+                            <label class="option-card delivery-option" for="pickup">
+                                <input type="radio" id="pickup" name="delivery_method" value="pickup" checked>
+                                <div class="option-content">
+                                    <i class="fas fa-store"></i>
+                                    <div>
+                                        <h4>Retrait sur place</h4>
+                                        <p>Gratuit • Prêt en 15-20 min</p>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="option-card delivery-option" for="delivery">
+                                <input type="radio" id="delivery" name="delivery_method" value="delivery">
+                                <div class="option-content">
+                                    <i class="fas fa-motorcycle"></i>
+                                    <div>
+                                        <h4>Livraison à domicile</h4>
+                                        <p>2.50€ • 30-45 min</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div id="delivery-address" class="delivery-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="customer-address"><i class="fas fa-map-marker-alt"></i> Adresse de livraison</label>
+                            <input type="text" id="customer-address" placeholder="Votre adresse complète" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customer-phone"><i class="fas fa-phone"></i> Téléphone</label>
+                                <input type="tel" id="customer-phone" placeholder="+33 6 XX XX XX XX" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="delivery-time"><i class="fas fa-clock"></i> Heure souhaitée</label>
+                                <select id="delivery-time">
+                                    <option value="asap">Le plus tôt possible</option>
+                                    <option value="19:00">19:00</option>
+                                    <option value="19:30">19:30</option>
+                                    <option value="20:00">20:00</option>
+                                    <option value="20:30">20:30</option>
+                                    <option value="21:00">21:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="order-btn">Ajouter au panier</button>
+                </form>
+                <div id="order-summary" aria-live="polite"></div>
+                <section class="cart">
+                    <h4><i class="fas fa-shopping-basket"></i> Votre panier</h4>
+                    <ul id="cart-items" aria-live="polite"></ul>
+                    <button type="button" id="checkout-btn">Valider la commande</button>
+                    <p id="checkout-status" aria-live="assertive"></p>
+                </section>
+
+                <!-- MODAL DE PAIEMENT SÉCURISÉ -->
+                <div id="payment-modal" class="payment-modal" style="display: none;">
+                    <div class="payment-modal-content">
+                        <div class="payment-modal-header">
+                            <h3><i class="fas fa-lock"></i> Paiement Sécurisé</h3>
+                            <button type="button" class="close-payment-modal" aria-label="Fermer">&times;</button>
+                        </div>
+
+                        <div class="payment-modal-body">
+                            <div class="payment-info">
+                                <p><strong>Total à payer :</strong> <span id="payment-amount">0</span> FCFA</p>
+                                <p class="security-badge"><i class="fas fa-shield-alt"></i> Paiement 100% sécurisé - Données chiffrées</p>
+                            </div>
+
+                            <form id="payment-form" class="payment-form">
+                                <!-- Titulaire de carte -->
+                                <div class="form-group">
+                                    <label for="card-holder">Titulaire de la carte</label>
+                                    <input type="text" id="card-holder" placeholder="NOM COMPLET" required>
+                                </div>
+
+                                <!-- Numéro de carte -->
+                                <div class="form-group">
+                                    <label for="card-number">Numéro de carte</label>
+                                    <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                                    <small>Format : 16 chiffres</small>
+                                </div>
+
+                                <!-- Expiration et CVC -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="card-expiry">Expiration (MM/AA)</label>
+                                        <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="card-cvc">CVC <i class="fas fa-info-circle" title="Code de sécurité au verso de la carte"></i></label>
+                                        <input type="password" id="card-cvc" placeholder="•••" maxlength="4" required>
+                                    </div>
+                                </div>
+
+                                <!-- Email pour confirmation -->
+                                <div class="form-group">
+                                    <label for="payment-email">Email (reçu de confirmation)</label>
+                                    <input type="email" id="payment-email" placeholder="votre@email.com" required>
+                                </div>
+
+                                <!-- Statut validation -->
+                                <div id="card-validation" class="card-validation" style="display: none;"></div>
+
+                                <!-- Bouton paiement -->
+                                <button type="submit" id="pay-btn" class="pay-btn">
+                                    <i class="fas fa-lock"></i> Payer maintenant
+                                </button>
+                            </form>
+
+                            <!-- OTP Section -->
+                            <div id="otp-section" style="display: none;" class="otp-section">
+                                <h4><i class="fas fa-mobile-alt"></i> Vérification 3D Secure</h4>
+                                <p>Un code de vérification a été envoyé à votre adresse email</p>
+                                <div class="form-group">
+                                    <label for="otp-code">Code OTP (6 chiffres)</label>
+                                    <input type="text" id="otp-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+                                </div>
+                                <button type="button" id="verify-otp-btn" class="verify-btn">
+                                    <i class="fas fa-check"></i> Vérifier et payer
+                                </button>
+                                <p class="otp-timer">Expire dans : <span id="otp-timer">300</span>s</p>
+                            </div>
+
+                            <!-- Succès -->
+                            <div id="payment-success" style="display: none;" class="payment-success">
+                                <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                                <h4>Paiement réussi !</h4>
+                                <p>Votre commande a été confirmée.</p>
+                                <p>Un email de confirmation a été envoyé à <strong id="success-email"></strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </details>
+        <details id="location" class="accordion-section">
+            <summary><i class="fas fa-map-marker-alt"></i> Nous trouver</summary>
+            <div class="section-content">
+                <div id="location-display">
+                    <div class="location-info">
+                        <h3>Adresse</h3>
+                        <p><i class="fas fa-map-pin"></i> <span id="owner-address-display">Non spécifiée</span></p>
+                        <h3>Contact</h3>
+                        <p><i class="fas fa-phone"></i> <span id="owner-phone-display">Non spécifié</span></p>
+                    </div>
+                </div>
+                <div id="map-container"></div>
+            </div>
+        </details>
+
+        <details id="chat" class="accordion-section">
+            <summary><i class="fas fa-comments"></i> Contactez-nous</summary>
+            <div class="section-content">
+                <div class="chat-intro">
+                    <h3>Une question ? Écrivez-nous !</h3>
+                    <p>Notre équipe vous répondra rapidement</p>
+                </div>
+                <div id="chat-messages" aria-live="polite"></div>
+                <form id="chat-form">
+                    <div class="form-group">
+                        <label for="chat-name">Votre nom</label>
+                        <input type="text" id="chat-name" placeholder="Votre nom" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="chat-message">Votre message</label>
+                        <textarea id="chat-message" placeholder="Votre message" required></textarea>
+                    </div>
+                    <button type="submit">Envoyer</button>
+                </form>
+            </div>
+        </details>
+    </main>
+    <footer>
+        <p>&copy; 2023 MR PAPRIKA</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
