@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>MR Paprika – Administration des prix</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,Arial,sans-serif;background:#fff7f3;color:#2a1410}
+header{background:#b3260e;color:#fff;padding:16px 5vw;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:1.2rem}
+main{max-width:640px;margin:0 auto;padding:24px 5vw 60px}
+h2{font-size:1.1rem;margin:28px 0 8px}
+.card{background:#fff;border:1px solid #e4c3b6;border-radius:10px;padding:16px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #f0dcd3}
+.row:first-child{border-top:0}
+.row label{flex:1}
+.row input{width:130px;padding:8px;border:1px solid #c9a89b;border-radius:6px;font-size:1rem;text-align:right}
+.row span{width:50px;font-size:.9rem}
+input[type=email],input[type=password]{width:100%;padding:10px;margin:6px 0 12px;border:1px solid #c9a89b;border-radius:6px;font-size:1rem}
+button{background:#b3260e;color:#fff;border:0;border-radius:999px;padding:12px 24px;font-size:1rem;font-weight:700;cursor:pointer}
+button.light{background:transparent;border:1px solid #fff;padding:8px 16px;font-size:.9rem}
+button:focus-visible,input:focus-visible{outline:3px solid #2a1410;outline-offset:2px}
+#msg{margin-top:16px;font-weight:600}
+.err{color:#b3260e}.ok{color:#1a7a3a}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>MR Paprika – Administration</h1><button id="logout" class="light" hidden>Se déconnecter</button></header>
+<main>
+<section id="login" class="card">
+<h2 style="margin-top:0">Connexion</h2>
+<label for="email">E-mail</label>
+<input id="email" type="email" autocomplete="username">
+<label for="pwd">Mot de passe</label>
+<input id="pwd" type="password" autocomplete="current-password">
+<button id="loginBtn">Se connecter</button>
+</section>
+
+<section id="panel" hidden>
+<h2>Pizzas</h2><div id="pizzas" class="card"></div>
+<h2>Suppléments</h2><div id="supplements" class="card"></div>
+<h2>Livraison</h2><div id="livraison" class="card"></div>
+<p><button id="save">Enregistrer les prix</button></p>
+</section>
+<p id="msg" role="status"></p>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// Collez ici la configuration de VOTRE projet Firebase
+const firebaseConfig = {
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "VOTRE_PROJET.firebaseapp.com",
+  projectId: "VOTRE_PROJET"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const ref = firebase.firestore().doc('config/prix');
+
+const DEFAUT = {
+  pizzas: {
+    margherita:   {nom:'Margherita',      prix:4000},
+    pepperoni:    {nom:'Pepperoni',       prix:4500},
+    vegetarienne: {nom:'Végétarienne',    prix:4500},
+    quatrefromages:{nom:'Quatre Fromages',prix:5000}
+  },
+  supplements: {
+    'extra-cheese':   {nom:'Fromage supplémentaire', prix:1000},
+    'extra-olives':   {nom:'Olives',                 prix:500},
+    'extra-mushrooms':{nom:'Champignons',            prix:500}
+  },
+  livraison: {livraison:{nom:'Livraison à domicile', prix:1500}}
+};
+
+const $ = id => document.getElementById(id);
+let data = null;
+
+function say(text, cls){ const m=$('msg'); m.textContent=text; m.className=cls||''; }
+
+function render(groupe, conteneur){
+  const box = $(conteneur); box.textContent = '';
+  for (const [id, item] of Object.entries(data[groupe])) {
+    const row = document.createElement('div'); row.className = 'row';
+    const label = document.createElement('label'); label.textContent = item.nom; label.htmlFor = groupe+'-'+id;
+    const input = document.createElement('input');
+    input.type='number'; input.min='0'; input.step='50'; input.inputMode='numeric';
+    input.id = groupe+'-'+id; input.value = item.prix;
+    input.addEventListener('input', () => { item.prix = Math.max(0, Math.round(Number(input.value)||0)); });
+    const unit = document.createElement('span'); unit.textContent = 'FCFA';
+    row.append(label, input, unit); box.append(row);
+  }
+}
+
+async function charger(){
+  try {
+    const snap = await ref.get();
+    data = snap.exists ? Object.assign({}, DEFAUT, snap.data()) : JSON.parse(JSON.stringify(DEFAUT));
+    render('pizzas','pizzas'); render('supplements','supplements'); render('livraison','livraison');
+  } catch(e){ say('Impossible de charger les prix : '+e.message,'err'); }
+}
+
+$('loginBtn').onclick = async () => {
+  say('');
+  try { await auth.signInWithEmailAndPassword($('email').value.trim(), $('pwd').value); }
+  catch(e){ say('Connexion refusée : e-mail ou mot de passe incorrect.','err'); }
+};
+$('pwd').addEventListener('keydown', e => { if(e.key==='Enter') $('loginBtn').click(); });
+$('logout').onclick = () => auth.signOut();
+
+$('save').onclick = async () => {
+  try { await ref.set(data); say('Prix enregistrés. Le site est à jour.','ok'); }
+  catch(e){ say("Enregistrement refusé. Vérifiez que vous êtes connecté avec le compte administrateur.",'err'); }
+};
+
+auth.onAuthStateChanged(user => {
+  $('login').hidden = !!user; $('panel').hidden = !user; $('logout').hidden = !user;
+  if (user) charger();
+});
+</script>
+</body>
+</html>
