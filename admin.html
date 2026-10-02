@@ -4,24 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>MR Paprika – Administration des prix</title>
+<title>MR Paprika – Administration</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font:16px/1.5 system-ui,Arial,sans-serif;background:#fff7f3;color:#2a1410}
 header{background:#b3260e;color:#fff;padding:16px 5vw;display:flex;justify-content:space-between;align-items:center}
 header h1{margin:0;font-size:1.2rem}
-main{max-width:640px;margin:0 auto;padding:24px 5vw 60px}
+main{max-width:680px;margin:0 auto;padding:24px 5vw 60px}
 h2{font-size:1.1rem;margin:28px 0 8px}
 .card{background:#fff;border:1px solid #e4c3b6;border-radius:10px;padding:16px}
-.row{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #f0dcd3}
+.row{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #f0dcd3;flex-wrap:wrap}
 .row:first-child{border-top:0}
-.row label{flex:1}
-.row input{width:130px;padding:8px;border:1px solid #c9a89b;border-radius:6px;font-size:1rem;text-align:right}
-.row span{width:50px;font-size:.9rem}
+.row label.nom{flex:1;min-width:120px}
+.row input[type=number]{width:120px;padding:8px;border:1px solid #c9a89b;border-radius:6px;font-size:1rem;text-align:right}
+.row span{font-size:.9rem}
+.thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#f6e1d8;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.photo-btn,.retirer{font-size:.85rem;border:1px solid #b3260e;color:#b3260e;background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer}
+.photo-btn:hover,.retirer:hover{background:#b3260e;color:#fff}
+.photo input{position:absolute;opacity:0;width:1px;height:1px}
+.photo input:focus-visible + .photo-btn{outline:3px solid #2a1410;outline-offset:2px}
 input[type=email],input[type=password]{width:100%;padding:10px;margin:6px 0 12px;border:1px solid #c9a89b;border-radius:6px;font-size:1rem}
-button{background:#b3260e;color:#fff;border:0;border-radius:999px;padding:12px 24px;font-size:1rem;font-weight:700;cursor:pointer}
-button.light{background:transparent;border:1px solid #fff;padding:8px 16px;font-size:.9rem}
-button:focus-visible,input:focus-visible{outline:3px solid #2a1410;outline-offset:2px}
+#loginBtn,#save{background:#b3260e;color:#fff;border:0;border-radius:999px;padding:12px 24px;font-size:1rem;font-weight:700;cursor:pointer}
+button.light{background:transparent;color:#fff;border:1px solid #fff;border-radius:999px;padding:8px 16px;font-size:.9rem;cursor:pointer}
 #msg{margin-top:16px;font-weight:600}
 .err{color:#b3260e}.ok{color:#1a7a3a}
 [hidden]{display:none!important}
@@ -40,10 +44,10 @@ button:focus-visible,input:focus-visible{outline:3px solid #2a1410;outline-offse
 </section>
 
 <section id="panel" hidden>
-<h2>Pizzas</h2><div id="pizzas" class="card"></div>
+<h2>Pizzas (prix et photos)</h2><div id="pizzas" class="card"></div>
 <h2>Suppléments</h2><div id="supplements" class="card"></div>
 <h2>Livraison</h2><div id="livraison" class="card"></div>
-<p><button id="save">Enregistrer les prix</button></p>
+<p><button id="save">Enregistrer les prix et les photos</button></p>
 </section>
 <p id="msg" role="status"></p>
 </main>
@@ -52,7 +56,6 @@ button:focus-visible,input:focus-visible{outline:3px solid #2a1410;outline-offse
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// Collez ici la configuration de VOTRE projet Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDtr8Eb-npB9m2OArnkKXhhLr7P-v42waA",
   authDomain: "mr-paprika.firebaseapp.com",
@@ -60,7 +63,8 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const ref = firebase.firestore().doc('config/prix');
+const db = firebase.firestore();
+const ref = db.doc('config/prix');
 
 const DEFAUT = {
   pizzas: {
@@ -79,20 +83,74 @@ const DEFAUT = {
 
 const $ = id => document.getElementById(id);
 let data = null;
+let images = {};      // photos actuelles (id -> data URL)
+let modifiees = {};   // photos à enregistrer (id -> data URL, ou null pour retirer)
 
 function say(text, cls){ const m=$('msg'); m.textContent=text; m.className=cls||''; }
+
+function redimensionner(file){
+  return new Promise((ok, ko) => {
+    if (!file.type.startsWith('image/')) return ko(new Error("Ce fichier n'est pas une image."));
+    const r = new FileReader();
+    r.onerror = () => ko(new Error('Lecture impossible.'));
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => ko(new Error('Image illisible (essayez une photo JPG ou PNG).'));
+      img.onload = () => {
+        const s = Math.min(1, 700 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const out = c.toDataURL('image/jpeg', 0.72);
+        out.length > 400000 ? ko(new Error('Image trop lourde.')) : ok(out);
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function vignette(box, id) {
+  box.textContent = '';
+  const src = id in modifiees ? modifiees[id] : images[id];
+  if (src) { const i = document.createElement('img'); i.className='thumb'; i.src=src; i.alt=''; box.appendChild(i); }
+  else { const d = document.createElement('div'); d.className='thumb'; d.textContent='🍕'; box.appendChild(d); }
+}
 
 function render(groupe, conteneur){
   const box = $(conteneur); box.textContent = '';
   for (const [id, item] of Object.entries(data[groupe])) {
     const row = document.createElement('div'); row.className = 'row';
-    const label = document.createElement('label'); label.textContent = item.nom; label.htmlFor = groupe+'-'+id;
+    let thumbBox = null;
+    if (groupe === 'pizzas') {
+      thumbBox = document.createElement('div'); vignette(thumbBox, id); row.appendChild(thumbBox);
+    }
+    const label = document.createElement('label'); label.className='nom'; label.textContent = item.nom; label.htmlFor = groupe+'-'+id;
     const input = document.createElement('input');
     input.type='number'; input.min='0'; input.step='50'; input.inputMode='numeric';
     input.id = groupe+'-'+id; input.value = item.prix;
     input.addEventListener('input', () => { item.prix = Math.max(0, Math.round(Number(input.value)||0)); });
     const unit = document.createElement('span'); unit.textContent = 'FCFA';
-    row.append(label, input, unit); box.append(row);
+    row.append(label, input, unit);
+
+    if (groupe === 'pizzas') {
+      const wrap = document.createElement('label'); wrap.className = 'photo';
+      const file = document.createElement('input'); file.type='file'; file.accept='image/*';
+      file.setAttribute('aria-label', 'Changer la photo de ' + item.nom);
+      const btn = document.createElement('span'); btn.className='photo-btn'; btn.textContent='Changer la photo';
+      file.addEventListener('change', async () => {
+        if (!file.files[0]) return;
+        try { modifiees[id] = await redimensionner(file.files[0]); vignette(thumbBox, id); say('Photo prête. Cliquez sur « Enregistrer » pour la publier.', 'ok'); }
+        catch(e){ say(e.message, 'err'); }
+        file.value = '';
+      });
+      wrap.append(file, btn); row.appendChild(wrap);
+
+      const ret = document.createElement('button'); ret.type='button'; ret.className='retirer'; ret.textContent='Retirer';
+      ret.addEventListener('click', () => { modifiees[id] = null; vignette(thumbBox, id); say('Photo retirée. Cliquez sur « Enregistrer ».', 'ok'); });
+      row.appendChild(ret);
+    }
+    box.append(row);
   }
 }
 
@@ -100,8 +158,11 @@ async function charger(){
   try {
     const snap = await ref.get();
     data = snap.exists ? Object.assign({}, DEFAUT, snap.data()) : JSON.parse(JSON.stringify(DEFAUT));
+    images = {}; modifiees = {};
+    const imgs = await db.collection('images').get();
+    imgs.forEach(d => { images[d.id] = d.data().data; });
     render('pizzas','pizzas'); render('supplements','supplements'); render('livraison','livraison');
-  } catch(e){ say('Impossible de charger les prix : '+e.message,'err'); }
+  } catch(e){ say('Impossible de charger les données : '+e.message,'err'); }
 }
 
 $('loginBtn').onclick = async () => {
@@ -113,8 +174,18 @@ $('pwd').addEventListener('keydown', e => { if(e.key==='Enter') $('loginBtn').cl
 $('logout').onclick = () => auth.signOut();
 
 $('save').onclick = async () => {
-  try { await ref.set(data); say('Prix enregistrés. Le site est à jour.','ok'); }
-  catch(e){ say("Enregistrement refusé. Vérifiez que vous êtes connecté avec le compte administrateur.",'err'); }
+  try {
+    await ref.set(data);
+    const batch = db.batch();
+    for (const [id, src] of Object.entries(modifiees)) {
+      const dref = db.doc('images/' + id);
+      src ? batch.set(dref, { data: src }) : batch.delete(dref);
+    }
+    await batch.commit();
+    Object.entries(modifiees).forEach(([id, src]) => { if (src) images[id] = src; else delete images[id]; });
+    modifiees = {};
+    say('Enregistré. Le site est à jour.','ok');
+  } catch(e){ say("Enregistrement refusé. Vérifiez que vous êtes connecté avec le compte administrateur.",'err'); }
 };
 
 auth.onAuthStateChanged(user => {
