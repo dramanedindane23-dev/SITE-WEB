@@ -34,3 +34,45 @@ body.has-contactbar{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 /* Petite indication sous le carrousel */
 .carousel:not(.no-scroll)::after{content:"← Glissez pour voir plus →";display:block;text-align:center;
   font-size:.8rem;opacity:.65;margin:-8px 0 14px}
+/* ===== Harmonisation avec votre thème orange ===== */
+.filter-btn{background:#fff;border:2px solid var(--primary);color:var(--primary);box-shadow:none;
+  text-transform:none;letter-spacing:0;padding:8px 18px;border-radius:999px}
+.filter-btn:hover,.filter-btn.active{background:var(--gradient);color:#fff;border-color:transparent}
+.pizza-body .pizza-price{color:var(--primary)}
+.pizza-choose{background:var(--gradient);color:#fff;border-radius:14px}
+.pizza-choose:hover{background:var(--gradient)}
+.car-btn{background:var(--primary)!important}
+.filter-btn:focus-visible,.pizza-choose:focus-visible{outline:3px solid var(--dark)}
+button:active{box-shadow:0 4px 15px rgba(255,107,53,.3)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--primary)}
+
+/* ===== Menu déroulant lisible (tablette et téléphone) ===== */
+@media (max-width:1024px){
+  #nav-links{background:#fff!important;border:1px solid #f1d9cc;box-shadow:0 12px 30px rgba(0,0,0,.2);
+    border-radius:0 0 18px 18px;z-index:100}
+  #nav-links a{color:var(--dark)}
+  #nav-links a i{color:var(--primary)}
+  #nav-links a:active{background:rgba(255,107,53,.12)}
+}
+
+/* ===== Téléphone : espaces et tailles ===== */
+@media (max-width:640px){
+  main{padding:.8em;margin:.6em auto;max-width:96%;border-radius:18px;gap:1em}
+  .accordion-section{margin:1em 0;border-radius:18px}
+  .accordion-section summary{font-size:1.1em;padding:1em 1.1em}
+  .section-content{padding:1em;border-radius:0 0 18px 18px}
+  header{padding:1.6em 0 1em}
+  header h1{font-size:2em}
+  .hero{padding:2em 1em}
+  .hero h2{font-size:1.8em}
+  .hero p{font-size:1.05em}
+  .menu-intro h3{font-size:1.2em}
+  .pizza-card{flex-basis:76%;border-radius:18px}
+  .pizza-body{padding:12px 14px 16px}
+}
+
+/* ===== Écran tactile : pas d'effet « survol » qui reste collé ===== */
+@media (hover:none){
+  .accordion-section:hover,.accordion-section[open],.pizza-card:hover,button:hover{transform:none}
+  button:hover::before{left:-100%}
+}
