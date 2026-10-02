@@ -1,0 +1,22 @@
+/* Anti-débordement sur téléphone */
+html,body{max-width:100%;overflow-x:hidden}
+img,iframe,video{max-width:100%}
+main,.accordion-section,.section-content{min-width:0;max-width:100%}
+.carousel{width:100%;max-width:100%;min-width:0;overflow:hidden}
+.pizza-cards{width:100%;max-width:100%;min-width:0}
+.car-prev{left:4px}.car-next{right:4px}
+p,h2,h3,h4{overflow-wrap:anywhere}
+
+/* Barre de contact en bas de l'écran */
+.wa-float{display:none!important}
+body.has-contactbar{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+.contactbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(4,1fr);
+  background:#fff;border-top:1px solid #e4c3b6;box-shadow:0 -4px 14px rgba(0,0,0,.12);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.contactbar a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;
+  font:600 .75rem 'Poppins',Arial,sans-serif;color:#2a1410;text-decoration:none}
+.contactbar i{font-size:1.4rem;color:#b3260e}
+.contactbar a.wa i{color:#25d366}
+.contactbar a:active{background:#f6e1d8}
+.contactbar a:focus-visible{outline:3px solid #2a1410;outline-offset:-3px}
+@media (min-width:900px){.contactbar{max-width:520px;left:50%;right:auto;width:100%;transform:translateX(-50%);border-radius:14px 14px 0 0}}
