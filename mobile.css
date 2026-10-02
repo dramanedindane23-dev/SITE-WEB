@@ -20,3 +20,17 @@ body.has-contactbar{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .contactbar a:active{background:#f6e1d8}
 .contactbar a:focus-visible{outline:3px solid #2a1410;outline-offset:-3px}
 @media (min-width:900px){.contactbar{max-width:520px;left:50%;right:auto;width:100%;transform:translateX(-50%);border-radius:14px 14px 0 0}}
+/* Flèches du carrousel : rondes, placées sur la photo (ordinateur seulement) */
+.car-btn{all:unset;box-sizing:border-box;position:absolute;top:56px;z-index:5;width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(179,38,14,.92);color:#fff;
+  font:400 24px/1 Arial,sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.car-btn:hover{background:#8f1d0a}
+.car-btn:focus-visible{outline:3px solid #2a1410;outline-offset:2px}
+.car-prev{left:6px}.car-next{right:6px}
+
+/* Sur téléphone et tablette tactile : on glisse avec le doigt, pas de flèches */
+@media (hover:none){.car-btn{display:none!important}}
+
+/* Petite indication sous le carrousel */
+.carousel:not(.no-scroll)::after{content:"← Glissez pour voir plus →";display:block;text-align:center;
+  font-size:.8rem;opacity:.65;margin:-8px 0 14px}
