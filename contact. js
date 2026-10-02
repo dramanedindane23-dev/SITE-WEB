@@ -1,0 +1,36 @@
+// Barre de contact : WhatsApp, Appel, SMS, Coordonnées
+(function () {
+  // À REMPLIR : indicatif du pays puis numéro, sans + ni espaces. Exemple : "2250102030405"
+  var NUMERO = "";
+  if (!NUMERO) return;
+
+  var ancien = document.getElementById("wa-float");
+  if (ancien) ancien.remove();
+
+  var msg = encodeURIComponent("Bonjour MR PAPRIKA, je souhaite commander une pizza.");
+  var items = [
+    { cls: "wa", icone: "fab fa-whatsapp", texte: "WhatsApp", href: "https://wa.me/" + NUMERO + "?text=" + msg, externe: true },
+    { icone: "fas fa-phone", texte: "Appel", href: "tel:+" + NUMERO },
+    { icone: "fas fa-comment-dots", texte: "SMS", href: "sms:+" + NUMERO + "?body=" + msg },
+    { icone: "fas fa-map-marker-alt", texte: "Coordonnées", href: "#location", ouvre: true }
+  ];
+
+  var barre = document.createElement("nav");
+  barre.className = "contactbar";
+  barre.setAttribute("aria-label", "Nous contacter");
+  items.forEach(function (it) {
+    var a = document.createElement("a");
+    a.href = it.href;
+    if (it.cls) a.className = it.cls;
+    if (it.externe) { a.target = "_blank"; a.rel = "noopener"; }
+    var i = document.createElement("i"); i.className = it.icone; i.setAttribute("aria-hidden", "true");
+    var s = document.createElement("span"); s.textContent = it.texte;
+    a.append(i, s);
+    if (it.ouvre) a.addEventListener("click", function () {
+      var d = document.getElementById("location"); if (d) d.open = true;
+    });
+    barre.appendChild(a);
+  });
+  document.body.appendChild(barre);
+  document.body.classList.add("has-contactbar");
+})();
