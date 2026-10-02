@@ -1,4 +1,4 @@
-// Galerie de pizzas, filtres et prix modifiables depuis l'espace admin.
+// Galerie de pizzas, filtres, prix et photos modifiables depuis l'espace admin.
 (function () {
   var firebaseConfig = {
     apiKey: "AIzaSyDtr8Eb-npB9m2OArnkKXhhLr7P-v42waA",
@@ -14,6 +14,7 @@
     { value: "quatre-fromages", cle: "quatrefromages", nom: "Quatre Fromages", cat: "classique",  emoji: "🧀", desc: "Mozzarella, chèvre, bleu et emmental." }
   ];
   var PRIX = { margherita: 4000, pepperoni: 4500, vegetarienne: 4500, quatrefromages: 5000 };
+  var IMAGES = {};
   var LIVRAISON = 1500;
 
   var galerie = document.getElementById("pizza-gallery");
@@ -31,7 +32,7 @@
       var visuel = document.createElement("div");
       visuel.className = "pizza-visual";
       var img = document.createElement("img");
-      img.src = "images/" + p.value + ".jpg";
+      img.src = IMAGES[p.cle] || ("images/" + p.value + ".jpg");
       img.alt = "Pizza " + p.nom;
       img.loading = "lazy";
       img.onerror = function () { img.remove(); visuel.textContent = p.emoji; };
@@ -58,33 +59,43 @@
     });
     var lib = document.getElementById("delivery-price-label");
     if (lib) lib.textContent = fcfa(LIVRAISON);
+    appliquerFiltre();
+  }
+
+  var filtreActif = "all";
+  function appliquerFiltre() {
+    galerie.querySelectorAll(".pizza-card").forEach(function (c) {
+      c.hidden = !(filtreActif === "all" || c.dataset.cat === filtreActif);
+    });
   }
 
   document.querySelectorAll(".filter-btn").forEach(function (b) {
     b.addEventListener("click", function () {
-      var f = b.dataset.filter;
+      filtreActif = b.dataset.filter;
       document.querySelectorAll(".filter-btn").forEach(function (x) {
         x.classList.toggle("active", x === b);
       });
-      galerie.querySelectorAll(".pizza-card").forEach(function (c) {
-        c.hidden = !(f === "all" || c.dataset.cat === f);
-      });
+      appliquerFiltre();
     });
   });
 
   dessiner();
 
-  // Prix depuis Firebase (si la connexion échoue, les prix par défaut restent affichés)
+  // Prix et photos depuis Firebase (si la connexion échoue, les valeurs par défaut restent)
   try {
     if (window.firebase) {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      firebase.firestore().doc("config/prix").get().then(function (snap) {
-        if (!snap.exists) return;
-        var d = snap.data();
-        if (d.pizzas) Object.keys(d.pizzas).forEach(function (k) { PRIX[k] = d.pizzas[k].prix; });
-        if (d.livraison && d.livraison.livraison) LIVRAISON = d.livraison.livraison.prix;
+      var db = firebase.firestore();
+      Promise.all([db.doc("config/prix").get(), db.collection("images").get()]).then(function (res) {
+        var snap = res[0], imgs = res[1];
+        if (snap.exists) {
+          var d = snap.data();
+          if (d.pizzas) Object.keys(d.pizzas).forEach(function (k) { PRIX[k] = d.pizzas[k].prix; });
+          if (d.livraison && d.livraison.livraison) LIVRAISON = d.livraison.livraison.prix;
+        }
+        imgs.forEach(function (doc) { IMAGES[doc.id] = doc.data().data; });
         dessiner();
-      }).catch(function (e) { console.warn("Prix Firebase non chargés :", e); });
+      }).catch(function (e) { console.warn("Données Firebase non chargées :", e); });
     }
   } catch (e) { console.warn(e); }
 })();
