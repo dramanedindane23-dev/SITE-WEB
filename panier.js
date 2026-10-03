@@ -1,6 +1,13 @@
-// Panier en FCFA branché sur l'espace admin, commande envoyée par WhatsApp.
+// Panier en FCFA, paiement Wave ou à la livraison, commande envoyée par WhatsApp.
 (function () {
-  var NUMERO = "2250799142133";
+  var NUMERO = "2250799142133";      // WhatsApp du restaurant (réception des commandes)
+
+  // ===== PAIEMENT WAVE : À REMPLIR =====
+  var WAVE_NUMERO = "";              // numéro Wave du restaurant, ex : "07 99 14 21 33"
+  var WAVE_NOM = "";                 // nom affiché dans Wave quand on tape le numéro
+  var WAVE_LIEN = "";                // optionnel : lien de paiement Wave Business, sinon laisser vide
+  var ESPECES = false;               // true = proposer aussi « payer à la livraison / au retrait »
+  // =====================================
 
   var CFG = { apiKey: "AIzaSyDtr8Eb-npB9m2OArnkKXhhLr7P-v42waA", authDomain: "mr-paprika.firebaseapp.com", projectId: "mr-paprika" };
   var PIZZAS = {
@@ -35,6 +42,16 @@
   function livraisonChoisie() {
     var r = document.querySelector('input[name="delivery_method"]:checked');
     return !!r && r.value === "delivery";
+  }
+  function cashPossible() { return ESPECES || !WAVE_NUMERO; }
+  function modePaiement() {
+    var r = document.querySelector('input[name="pay_method"]:checked');
+    return r ? r.value : "";
+  }
+  function totaux() {
+    var sous = cart.reduce(function (s, it) { return s + it.prix; }, 0);
+    var liv = cart.length && livraisonChoisie() ? LIVRAISON : 0;
+    return { sous: sous, liv: liv, total: sous + liv };
   }
 
   function dessinerSupp() {
@@ -73,6 +90,57 @@
     ref.parentNode.insertBefore(zone, ref);
   }
 
+  function dessinerPaiement() {
+    if ($("pay-zone")) return;
+    var zone = document.createElement("fieldset");
+    zone.id = "pay-zone"; zone.className = "delivery-options";
+    var lg = document.createElement("legend"); lg.textContent = "Mode de paiement"; zone.appendChild(lg);
+
+    function option(val, texte, coche) {
+      var l = document.createElement("label"); l.style.cssText = "display:flex;gap:10px;align-items:center;padding:8px 0;cursor:pointer";
+      var r = document.createElement("input"); r.type = "radio"; r.name = "pay_method"; r.value = val; r.checked = coche;
+      r.addEventListener("change", majPaiement);
+      var s = document.createElement("span"); s.textContent = texte;
+      l.append(r, s); zone.appendChild(l);
+    }
+    if (WAVE_NUMERO) option("wave", "Wave (mobile money)", true);
+    if (cashPossible()) option("cash", "Payer à la livraison / au retrait", !WAVE_NUMERO);
+
+    var info = document.createElement("div"); info.id = "wave-info"; info.hidden = true;
+    info.style.cssText = "margin-top:10px;padding:12px;border-radius:12px;background:#eaf6ff";
+    var p1 = document.createElement("p"); p1.id = "wave-texte"; p1.style.margin = "0 0 8px";
+    var lien = document.createElement("a"); lien.id = "wave-lien"; lien.target = "_blank"; lien.rel = "noopener"; lien.hidden = true;
+    lien.textContent = "Payer avec Wave"; lien.style.cssText = "display:inline-block;margin:4px 0 10px;padding:10px 18px;border-radius:999px;background:#1dc8ff;color:#fff;font-weight:700;text-decoration:none";
+    var g = document.createElement("div"); g.className = "form-group";
+    var l = document.createElement("label"); l.htmlFor = "pay-ref"; l.textContent = "Référence de la transaction Wave";
+    var i = document.createElement("input"); i.id = "pay-ref"; i.type = "text"; i.placeholder = "Ex : T_ABC123XYZ"; i.autocomplete = "off";
+    var pm = document.createElement("small"); pm.textContent = "Vous la trouvez dans le SMS ou dans l'historique de l'application Wave.";
+    g.append(l, i, pm);
+    info.append(p1, lien, g);
+    zone.appendChild(info);
+
+    var panier = document.querySelector(".cart");
+    if (panier) panier.parentNode.insertBefore(zone, panier);
+    else payBtn.parentNode.insertBefore(zone, payBtn);
+  }
+
+  function majPaiement() {
+    var info = $("wave-info"); if (!info) return;
+    var wave = modePaiement() === "wave";
+    info.hidden = !wave;
+    if (!wave) return;
+    var t = totaux().total;
+    $("wave-texte").textContent = (t
+      ? "1) Ouvrez Wave. 2) Envoyez exactement " + fcfa(t)
+      : "1) Ajoutez vos pizzas au panier. 2) Dans Wave, envoyez le total")
+      + " au " + WAVE_NUMERO + (WAVE_NOM ? " (" + WAVE_NOM + ")" : "") + ". 3) Saisissez ci-dessous la référence de la transaction.";
+    var lien = $("wave-lien");
+    if (WAVE_LIEN && t) {
+      lien.href = WAVE_LIEN + (WAVE_LIEN.indexOf("?") > -1 ? "&" : "?") + "amount=" + t;
+      lien.hidden = false;
+    } else { lien.hidden = true; }
+  }
+
   function ligne(ul, texte, gras) {
     var p = document.createElement("p"); p.textContent = texte; p.style.margin = "4px 0";
     if (gras) p.style.fontWeight = "700";
@@ -82,20 +150,19 @@
   function rendre() {
     var ul = $("cart-items"); ul.textContent = "";
     var lib = $("delivery-price-label"); if (lib) lib.textContent = fcfa(LIVRAISON);
-    if (!cart.length) { var v = document.createElement("li"); v.textContent = "Le panier est vide."; ul.appendChild(v); return; }
-    var sous = 0;
+    if (!cart.length) { var v = document.createElement("li"); v.textContent = "Le panier est vide."; ul.appendChild(v); majPaiement(); return; }
     cart.forEach(function (it, i) {
-      sous += it.prix;
       var li = document.createElement("li");
       li.textContent = it.nom + " – " + it.taille + (it.extras.length ? " (" + it.extras.join(", ") + ")" : "") + " : " + fcfa(it.prix) + " ";
       var b = document.createElement("button"); b.type = "button"; b.className = "remove-item"; b.textContent = "Supprimer";
       b.addEventListener("click", function () { cart.splice(i, 1); rendre(); });
       li.appendChild(b); ul.appendChild(li);
     });
-    var liv = livraisonChoisie() ? LIVRAISON : 0;
-    ligne(ul, "Sous-total : " + fcfa(sous));
-    if (liv) ligne(ul, "Livraison : " + fcfa(liv));
-    ligne(ul, "Total : " + fcfa(sous + liv), true);
+    var T = totaux();
+    ligne(ul, "Sous-total : " + fcfa(T.sous));
+    if (T.liv) ligne(ul, "Livraison : " + fcfa(T.liv));
+    ligne(ul, "Total : " + fcfa(T.total), true);
+    majPaiement();
   }
 
   addBtn.addEventListener("click", function () {
@@ -125,6 +192,7 @@
     a.addEventListener("click", function () {
       setTimeout(function () {
         cart = []; rendre(); box.textContent = "";
+        var ref = $("pay-ref"); if (ref) ref.value = "";
         st.textContent = "Merci ! Si le message WhatsApp est bien parti, nous préparons votre commande.";
         st.style.color = "#1a7a3a";
       }, 400);
@@ -146,9 +214,16 @@
       adr = $("customer-address").value.trim();
       if (!adr) return msg("Indiquez votre adresse de livraison.");
     }
+    var mode = modePaiement();
+    if (!mode) return msg("Choisissez un mode de paiement.");
+    var ref = "";
+    if (mode === "wave") {
+      ref = $("pay-ref").value.trim();
+      if (ref.length < 5) return msg("Payez d'abord avec Wave, puis saisissez la référence de la transaction.");
+    }
     if (!NUMERO) return msg("La commande en ligne n'est pas encore activée. Utilisez le bouton Appel pour commander.");
 
-    var sous = cart.reduce(function (s, it) { return s + it.prix; }, 0), liv = livr ? LIVRAISON : 0;
+    var T = totaux();
     var numero = "MP-" + Date.now().toString(36).slice(-5).toUpperCase();
     var quand = new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
     var t = ["🍕 NOUVELLE COMMANDE MR PAPRIKA", "N° " + numero, "Date : " + quand, "",
@@ -156,12 +231,17 @@
     cart.forEach(function (it) {
       t.push("• " + it.nom + " " + it.taille + (it.extras.length ? " + " + it.extras.join(", ") : "") + " : " + fcfa(it.prix));
     });
-    t.push("", "Sous-total : " + fcfa(sous));
-    if (liv) t.push("Livraison : " + fcfa(liv));
-    t.push("TOTAL : " + fcfa(sous + liv), "");
+    t.push("", "Sous-total : " + fcfa(T.sous));
+    if (T.liv) t.push("Livraison : " + fcfa(T.liv));
+    t.push("TOTAL : " + fcfa(T.total), "");
     if (livr) { t.push("Mode : LIVRAISON", "Adresse : " + adr, "Heure souhaitée : " + $("delivery-time").value); }
     else { t.push("Mode : RETRAIT SUR PLACE"); }
-    t.push("Paiement : à la " + (livr ? "livraison" : "récupération") + " (ou mobile money)");
+    if (mode === "wave") {
+      t.push("", "💳 Paiement : WAVE (" + fcfa(T.total) + " envoyés)", "Référence Wave : " + ref,
+             "⚠️ À vérifier dans Wave avant de préparer la commande.");
+    } else {
+      t.push("", "Paiement : à la " + (livr ? "livraison" : "récupération"));
+    }
 
     st.textContent = "";
     afficherEnvoi("https://wa.me/" + NUMERO + "?text=" + encodeURIComponent(t.join("\n")));
@@ -169,7 +249,7 @@
 
   document.querySelectorAll('input[name="delivery_method"]').forEach(function (r) { r.addEventListener("change", rendre); });
 
-  dessinerSupp(); dessinerClient(); rendre();
+  dessinerSupp(); dessinerClient(); dessinerPaiement(); rendre();
 
   try {
     if (window.firebase) {
