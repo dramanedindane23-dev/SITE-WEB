@@ -28,6 +28,10 @@
   var addBtn = neuf("order-btn"), payBtn = neuf("checkout-btn");
   if (!addBtn || !payBtn || !$("pizza-form")) return;
 
+  function refLivraison() {
+    var r = document.querySelector('#pizza-form input[name="delivery_method"]');
+    return r ? r.closest("fieldset") : null;
+  }
   function livraisonChoisie() {
     var r = document.querySelector('input[name="delivery_method"]:checked');
     return !!r && r.value === "delivery";
@@ -40,7 +44,7 @@
     if (!zone) {
       zone = document.createElement("fieldset");
       zone.id = "extras-zone"; zone.className = "delivery-options";
-      var ref = document.querySelector("#pizza-form .delivery-options");
+      var ref = refLivraison();
       ref.parentNode.insertBefore(zone, ref);
     }
     zone.textContent = "";
@@ -51,6 +55,22 @@
       var s = document.createElement("span"); s.textContent = SUPP[id].nom + " (+" + fcfa(SUPP[id].prix) + ")";
       l.append(c, s); zone.appendChild(l);
     });
+  }
+
+  function dessinerClient() {
+    if ($("client-zone")) return;
+    var zone = document.createElement("fieldset");
+    zone.id = "client-zone"; zone.className = "delivery-options";
+    var lg = document.createElement("legend"); lg.textContent = "Vos coordonnées"; zone.appendChild(lg);
+    [["client-nom", "Votre nom", "text", "Nom et prénom", "name"],
+     ["client-tel", "Votre téléphone", "tel", "07 XX XX XX XX", "tel"]].forEach(function (c) {
+      var g = document.createElement("div"); g.className = "form-group";
+      var l = document.createElement("label"); l.htmlFor = c[0]; l.textContent = c[1];
+      var i = document.createElement("input"); i.id = c[0]; i.type = c[2]; i.placeholder = c[3]; i.autocomplete = c[4];
+      g.append(l, i); zone.appendChild(g);
+    });
+    var ref = refLivraison();
+    ref.parentNode.insertBefore(zone, ref);
   }
 
   function ligne(ul, texte, gras) {
@@ -88,33 +108,68 @@
     rendre();
   });
 
+  function afficherEnvoi(url) {
+    var st = $("checkout-status");
+    var box = $("commande-confirm");
+    if (!box) {
+      box = document.createElement("div"); box.id = "commande-confirm"; box.setAttribute("aria-live", "polite");
+      st.parentNode.insertBefore(box, st.nextSibling);
+    }
+    box.textContent = "";
+    var p = document.createElement("p");
+    p.textContent = "Dernière étape : appuyez sur le bouton vert, puis sur « Envoyer » dans WhatsApp. Votre commande n'est reçue que lorsque le message est envoyé.";
+    var a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = "Envoyer ma commande sur WhatsApp";
+    a.style.cssText = "display:inline-block;margin-top:8px;padding:14px 24px;border-radius:999px;background:#25d366;color:#fff;font-weight:700;text-decoration:none";
+    a.addEventListener("click", function () {
+      setTimeout(function () {
+        cart = []; rendre(); box.textContent = "";
+        st.textContent = "Merci ! Si le message WhatsApp est bien parti, nous préparons votre commande.";
+        st.style.color = "#1a7a3a";
+      }, 400);
+    });
+    box.append(p, a);
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   payBtn.addEventListener("click", function () {
     var st = $("checkout-status");
-    function msg(t, ok) { st.textContent = t; st.style.color = ok ? "#1a7a3a" : "#c0392b"; }
+    function msg(t) { st.textContent = t; st.style.color = "#c0392b"; }
     if (!cart.length) return msg("Le panier est vide : ajoutez au moins une pizza.");
-    var livr = livraisonChoisie(), adr = "", tel = "";
+    var nom = $("client-nom").value.trim();
+    var telClient = $("client-tel").value.trim() || ($("customer-phone") ? $("customer-phone").value.trim() : "");
+    if (!nom) return msg("Indiquez votre nom.");
+    if (telClient.replace(/\D/g, "").length < 8) return msg("Indiquez un numéro de téléphone valide.");
+    var livr = livraisonChoisie(), adr = "";
     if (livr) {
-      adr = $("customer-address").value.trim(); tel = $("customer-phone").value.trim();
-      if (!adr || !tel) return msg("Indiquez votre adresse et votre téléphone pour la livraison.");
+      adr = $("customer-address").value.trim();
+      if (!adr) return msg("Indiquez votre adresse de livraison.");
     }
     if (!NUMERO) return msg("La commande en ligne n'est pas encore activée. Utilisez le bouton Appel pour commander.");
+
     var sous = cart.reduce(function (s, it) { return s + it.prix; }, 0), liv = livr ? LIVRAISON : 0;
-    var t = ["Bonjour MR PAPRIKA, voici ma commande :", ""];
-    cart.forEach(function (it) { t.push("- " + it.nom + " " + it.taille + (it.extras.length ? " + " + it.extras.join(", ") : "") + " : " + fcfa(it.prix)); });
+    var numero = "MP-" + Date.now().toString(36).slice(-5).toUpperCase();
+    var quand = new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+    var t = ["🍕 NOUVELLE COMMANDE MR PAPRIKA", "N° " + numero, "Date : " + quand, "",
+             "Client : " + nom, "Téléphone : " + telClient, ""];
+    cart.forEach(function (it) {
+      t.push("• " + it.nom + " " + it.taille + (it.extras.length ? " + " + it.extras.join(", ") : "") + " : " + fcfa(it.prix));
+    });
     t.push("", "Sous-total : " + fcfa(sous));
     if (liv) t.push("Livraison : " + fcfa(liv));
     t.push("TOTAL : " + fcfa(sous + liv), "");
-    if (livr) { t.push("Livraison à : " + adr, "Téléphone : " + tel, "Heure : " + $("delivery-time").value); }
-    else { t.push("Retrait sur place"); }
+    if (livr) { t.push("Mode : LIVRAISON", "Adresse : " + adr, "Heure souhaitée : " + $("delivery-time").value); }
+    else { t.push("Mode : RETRAIT SUR PLACE"); }
     t.push("Paiement : à la " + (livr ? "livraison" : "récupération") + " (ou mobile money)");
-    window.open("https://wa.me/" + NUMERO + "?text=" + encodeURIComponent(t.join("\n")), "_blank", "noopener");
-    msg("Dernière étape : envoyez le message WhatsApp pour confirmer votre commande.", true);
-    cart = []; rendre();
+
+    st.textContent = "";
+    afficherEnvoi("https://wa.me/" + NUMERO + "?text=" + encodeURIComponent(t.join("\n")));
   });
 
   document.querySelectorAll('input[name="delivery_method"]').forEach(function (r) { r.addEventListener("change", rendre); });
 
-  dessinerSupp(); rendre();
+  dessinerSupp(); dessinerClient(); rendre();
 
   try {
     if (window.firebase) {
