@@ -76,3 +76,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--primary)}
   .accordion-section:hover,.accordion-section[open],.pizza-card:hover,button:hover{transform:none}
   button:hover::before{left:-100%}
 }
+/* Remet le dégradé orange et garde les points par-dessus */
+header,.hero,footer{
+  background-image:
+    radial-gradient(circle at 20% 25%,rgba(255,255,255,.16) 0 2px,transparent 3px),
+    radial-gradient(circle at 70% 65%,rgba(255,255,255,.12) 0 3px,transparent 4px),
+    radial-gradient(circle at 45% 85%,rgba(0,0,0,.06) 0 2px,transparent 3px),
+    var(--gradient);
+  background-size:44px 44px,68px 68px,52px 52px,auto;
+}
