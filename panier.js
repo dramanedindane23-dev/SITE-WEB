@@ -1,4 +1,4 @@
-// Panier en FCFA, paiement Wave ou à la livraison, commande envoyée par WhatsApp.
+// Panier en FCFA branché sur le menu de l'espace admin. Paiement Wave ou à la livraison, commande envoyée par WhatsApp.
 (function () {
   var NUMERO = "2250799142133";      // WhatsApp du restaurant (réception des commandes)
 
@@ -9,26 +9,15 @@
   var ESPECES = false;               // true = proposer aussi « payer à la livraison / au retrait »
   // =====================================
 
-  var CFG = { apiKey: "AIzaSyDtr8Eb-npB9m2OArnkKXhhLr7P-v42waA", authDomain: "mr-paprika.firebaseapp.com", projectId: "mr-paprika" };
-  var PIZZAS = {
-    "margherita":      { cle: "margherita",     nom: "Margherita" },
-    "pepperoni":       { cle: "pepperoni",      nom: "Pepperoni" },
-    "vegetarienne":    { cle: "vegetarienne",   nom: "Végétarienne" },
-    "quatre-fromages": { cle: "quatrefromages", nom: "Quatre Fromages" }
-  };
-  var PRIX = { margherita: 4000, pepperoni: 4500, vegetarienne: 4500, quatrefromages: 5000 };
-  var SUPP = {
-    "extra-cheese":    { nom: "Fromage supplémentaire", prix: 1000 },
-    "extra-olives":    { nom: "Olives", prix: 500 },
-    "extra-mushrooms": { nom: "Champignons", prix: 500 }
-  };
   var TAILLES = { small: { nom: "Petite (25cm)", coef: 1 }, medium: { nom: "Moyenne (30cm)", coef: 1.6 }, large: { nom: "Grande (35cm)", coef: 2.2 } };
-  var LIVRAISON = 1500;
+  var D = window.MPData || { menu: [], supplements: {}, livraison: 1500 };
   var cart = [];
 
   function $(id) { return document.getElementById(id); }
   function fcfa(n) { return new Intl.NumberFormat("fr-FR").format(n) + " FCFA"; }
   function arrondi(n) { return Math.round(n / 50) * 50; }
+  function plat(id) { return D.menu.filter(function (p) { return p.id === id; })[0]; }
+  function actifs() { return D.menu.filter(function (p) { return p.actif !== false; }); }
 
   // On retire les anciens gestionnaires de script.js (ils plantent) en clonant les boutons
   function neuf(id) { var el = $(id); if (!el) return null; var c = el.cloneNode(true); el.replaceWith(c); return c; }
@@ -50,9 +39,31 @@
   }
   function totaux() {
     var sous = cart.reduce(function (s, it) { return s + it.prix; }, 0);
-    var liv = cart.length && livraisonChoisie() ? LIVRAISON : 0;
+    var liv = cart.length && livraisonChoisie() ? D.livraison : 0;
     return { sous: sous, liv: liv, total: sous + liv };
   }
+  function libelle(it) {
+    return it.nom + (it.taille ? " – " + it.taille : "") + (it.extras.length ? " (" + it.extras.join(", ") + ")" : "");
+  }
+
+  // Liste déroulante construite à partir du menu
+  function majSelect() {
+    var s = $("type"), cur = s.value;
+    s.textContent = "";
+    actifs().forEach(function (p) {
+      var o = document.createElement("option"); o.value = p.id; o.textContent = p.nom; s.appendChild(o);
+    });
+    if (cur && plat(cur)) s.value = cur;
+    majOptions();
+  }
+  // Tailles et suppléments seulement pour les pizzas
+  function majOptions() {
+    var p = plat($("type").value), pizza = !!(p && p.pizza);
+    var row = $("size") ? $("size").closest(".form-row") : null;
+    if (row) row.style.display = pizza ? "" : "none";
+    var z = $("extras-zone"); if (z) z.style.display = pizza ? "" : "none";
+  }
+  $("type").addEventListener("change", majOptions);
 
   function dessinerSupp() {
     var zone = $("extras-zone");
@@ -66,12 +77,13 @@
     }
     zone.textContent = "";
     var lg = document.createElement("legend"); lg.textContent = "Suppléments (optionnel)"; zone.appendChild(lg);
-    Object.keys(SUPP).forEach(function (id) {
+    Object.keys(D.supplements).forEach(function (id) {
       var l = document.createElement("label"); l.style.cssText = "display:flex;gap:10px;align-items:center;padding:6px 0;cursor:pointer";
       var c = document.createElement("input"); c.type = "checkbox"; c.value = id; c.checked = !!coches[id];
-      var s = document.createElement("span"); s.textContent = SUPP[id].nom + " (+" + fcfa(SUPP[id].prix) + ")";
+      var s = document.createElement("span"); s.textContent = D.supplements[id].nom + " (+" + fcfa(D.supplements[id].prix) + ")";
       l.append(c, s); zone.appendChild(l);
     });
+    majOptions();
   }
 
   function dessinerClient() {
@@ -132,7 +144,7 @@
     var t = totaux().total;
     $("wave-texte").textContent = (t
       ? "1) Ouvrez Wave. 2) Envoyez exactement " + fcfa(t)
-      : "1) Ajoutez vos pizzas au panier. 2) Dans Wave, envoyez le total")
+      : "1) Ajoutez vos articles au panier. 2) Dans Wave, envoyez le total")
       + " au " + WAVE_NUMERO + (WAVE_NOM ? " (" + WAVE_NOM + ")" : "") + ". 3) Saisissez ci-dessous la référence de la transaction.";
     var lien = $("wave-lien");
     if (WAVE_LIEN && t) {
@@ -149,11 +161,11 @@
 
   function rendre() {
     var ul = $("cart-items"); ul.textContent = "";
-    var lib = $("delivery-price-label"); if (lib) lib.textContent = fcfa(LIVRAISON);
+    var lib = $("delivery-price-label"); if (lib) lib.textContent = fcfa(D.livraison);
     if (!cart.length) { var v = document.createElement("li"); v.textContent = "Le panier est vide."; ul.appendChild(v); majPaiement(); return; }
     cart.forEach(function (it, i) {
       var li = document.createElement("li");
-      li.textContent = it.nom + " – " + it.taille + (it.extras.length ? " (" + it.extras.join(", ") + ")" : "") + " : " + fcfa(it.prix) + " ";
+      li.textContent = libelle(it) + " : " + fcfa(it.prix) + " ";
       var b = document.createElement("button"); b.type = "button"; b.className = "remove-item"; b.textContent = "Supprimer";
       b.addEventListener("click", function () { cart.splice(i, 1); rendre(); });
       li.appendChild(b); ul.appendChild(li);
@@ -166,12 +178,21 @@
   }
 
   addBtn.addEventListener("click", function () {
-    var type = $("type").value, size = $("size").value;
-    var ids = Array.prototype.map.call(document.querySelectorAll("#extras-zone input:checked"), function (i) { return i.value; });
-    var base = arrondi((PRIX[PIZZAS[type].cle] || 0) * TAILLES[size].coef);
-    var prix = base + ids.reduce(function (s, id) { return s + SUPP[id].prix; }, 0);
-    cart.push({ nom: PIZZAS[type].nom, taille: TAILLES[size].nom, extras: ids.map(function (id) { return SUPP[id].nom; }), prix: prix });
-    $("order-summary").textContent = "Ajouté : " + PIZZAS[type].nom + " (" + TAILLES[size].nom + ") — " + fcfa(prix);
+    var p = plat($("type").value);
+    if (!p) return;
+    var prix, taille = "", noms = [];
+    if (p.pizza) {
+      var size = $("size").value;
+      taille = TAILLES[size].nom;
+      prix = arrondi((p.prix || 0) * TAILLES[size].coef);
+      Array.prototype.forEach.call(document.querySelectorAll("#extras-zone input:checked"), function (i) {
+        var s = D.supplements[i.value]; if (s) { prix += s.prix; noms.push(s.nom); }
+      });
+    } else {
+      prix = p.prix || 0;
+    }
+    cart.push({ nom: p.nom, taille: taille, extras: noms, prix: prix });
+    $("order-summary").textContent = "Ajouté : " + p.nom + (taille ? " (" + taille + ")" : "") + " — " + fcfa(prix);
     rendre();
   });
 
@@ -204,7 +225,7 @@
   payBtn.addEventListener("click", function () {
     var st = $("checkout-status");
     function msg(t) { st.textContent = t; st.style.color = "#c0392b"; }
-    if (!cart.length) return msg("Le panier est vide : ajoutez au moins une pizza.");
+    if (!cart.length) return msg("Le panier est vide : ajoutez au moins un article.");
     var nom = $("client-nom").value.trim();
     var telClient = $("client-tel").value.trim() || ($("customer-phone") ? $("customer-phone").value.trim() : "");
     if (!nom) return msg("Indiquez votre nom.");
@@ -229,7 +250,7 @@
     var t = ["🍕 NOUVELLE COMMANDE MR PAPRIKA", "N° " + numero, "Date : " + quand, "",
              "Client : " + nom, "Téléphone : " + telClient, ""];
     cart.forEach(function (it) {
-      t.push("• " + it.nom + " " + it.taille + (it.extras.length ? " + " + it.extras.join(", ") : "") + " : " + fcfa(it.prix));
+      t.push("• " + it.nom + (it.taille ? " " + it.taille : "") + (it.extras.length ? " + " + it.extras.join(", ") : "") + " : " + fcfa(it.prix));
     });
     t.push("", "Sous-total : " + fcfa(T.sous));
     if (T.liv) t.push("Livraison : " + fcfa(T.liv));
@@ -249,19 +270,10 @@
 
   document.querySelectorAll('input[name="delivery_method"]').forEach(function (r) { r.addEventListener("change", rendre); });
 
-  dessinerSupp(); dessinerClient(); dessinerPaiement(); rendre();
-
-  try {
-    if (window.firebase) {
-      if (!firebase.apps.length) firebase.initializeApp(CFG);
-      firebase.firestore().doc("config/prix").get().then(function (snap) {
-        if (!snap.exists) return;
-        var d = snap.data();
-        if (d.pizzas) Object.keys(d.pizzas).forEach(function (k) { PRIX[k] = d.pizzas[k].prix; });
-        if (d.supplements) Object.keys(d.supplements).forEach(function (k) { if (SUPP[k]) SUPP[k].prix = d.supplements[k].prix; });
-        if (d.livraison && d.livraison.livraison) LIVRAISON = d.livraison.livraison.prix;
-        dessinerSupp(); rendre();
-      }).catch(function (e) { console.warn("Prix non chargés :", e); });
-    }
-  } catch (e) { console.warn(e); }
+  // Démarrage + mise à jour quand le menu Firebase arrive
+  dessinerSupp(); dessinerClient(); dessinerPaiement(); majSelect(); rendre();
+  document.addEventListener("mp:data", function () {
+    D = window.MPData || D;
+    majSelect(); dessinerSupp(); rendre();
+  });
 })();
