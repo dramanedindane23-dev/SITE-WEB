@@ -3,85 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>À propos - MR PAPRIKA</title>
+    <title>À propos | MR PAPRIKA, pizzeria à Angré, Abidjan</title>
+    <meta name="description" content="Découvrez MR PAPRIKA, pizzeria à Angré Nouveau CHU, Abidjan : pizza artisanale, commande en ligne, retrait sur place ou livraison. Ouvert du mardi au dimanche, de 9h à 22h30.">
+    <link rel="canonical" href="https://dramanedindane23-dev.github.io/SITE-WEB/about.html">
+    <meta name="theme-color" content="#FF6B35">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="menu.css">
+    <link rel="stylesheet" href="mobile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .ap-bloc{background:#fff;border-radius:22px;padding:1.6em;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+        .ap-bloc h2{font-size:1.6em;color:var(--primary);margin:0 0 .5em}
+        .ap-bloc p{margin:0 0 .8em}
+        .ap-etapes{list-style:none;padding:0;margin:0;counter-reset:etape}
+        .ap-etapes li{counter-increment:etape;display:flex;gap:12px;align-items:flex-start;margin:.9em 0}
+        .ap-etapes li::before{content:counter(etape);flex:none;width:32px;height:32px;border-radius:50%;background:var(--gradient);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+        .ap-reseaux{display:flex;flex-wrap:wrap;gap:10px}
+        .ap-reseaux a{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;background:var(--gradient);color:#fff;font-weight:600;text-decoration:none}
+        .ap-cta{display:inline-block;margin-top:.6em;padding:14px 28px;border-radius:999px;background:var(--gradient);color:#fff;font-weight:700;text-decoration:none}
+        .ap-bloc a:focus-visible,.ap-cta:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
+        #map-container{margin-top:1em;border-radius:16px;overflow:hidden}
+    </style>
 </head>
 <body>
     <header>
         <nav>
             <ul>
                 <li><a href="index.html">Accueil</a></li>
-                <li><a href="about.html">À propos</a></li>
+                <li><a href="about.html" aria-current="page">À propos</a></li>
             </ul>
         </nav>
         <h1>À propos de MR PAPRIKA</h1>
+        <p class="tagline">Pizza artisanale • Service express • Livraison rapide</p>
     </header>
     <main>
-        <p>Ce site web est dédié à MR PAPRIKA, créé pour démontrer les bases du développement web avec HTML, CSS et JavaScript.</p>
-        <p>Il inclut une navigation, des styles améliorés et de l'interactivité.</p>
-
-        <section class="owner-contact">
-            <h3>Coordonnées du propriétaire</h3>
-            <form id="owner-form">
-                <div>
-                    <label for="owner-name">Nom :</label>
-                    <input type="text" id="owner-name" placeholder="Nom du propriétaire" required>
-                </div>
-                <div>
-                    <label for="owner-email">Email :</label>
-                    <input type="email" id="owner-email" placeholder="email@exemple.com" required>
-                </div>
-                <div>
-                    <label for="owner-phone">Téléphone :</label>
-                    <input type="tel" id="owner-phone" placeholder="+33 6 12 34 56 78" required>
-                </div>
-                <div>
-                    <label for="owner-address">Adresse :</label>
-                    <input type="text" id="owner-address" placeholder="Adresse" required>
-                </div>
-                <div>
-                    <label for="owner-map">Lien Google Maps (optionnel) :</label>
-                    <input type="url" id="owner-map" placeholder="https://www.google.com/maps/embed?..." >
-                </div>
-                <div>
-                    <label for="owner-whatsapp">Lien WhatsApp (optionnel) :</label>
-                    <input type="url" id="owner-whatsapp" placeholder="https://wa.me/..." >
-                </div>
-                <div>
-                    <label for="owner-tiktok">Lien TikTok (optionnel) :</label>
-                    <input type="url" id="owner-tiktok" placeholder="https://tiktok.com/..." >
-                </div>
-                <div>
-                    <label for="owner-instagram">Lien Instagram (optionnel) :</label>
-                    <input type="url" id="owner-instagram" placeholder="https://instagram.com/..." >
-                </div>
-                <div>
-                    <label for="owner-facebook">Lien Facebook (optionnel) :</label>
-                    <input type="url" id="owner-facebook" placeholder="https://facebook.com/..." >
-                </div>
-                <button type="submit">Sauvegarder les coordonnées</button>
-            </form>
-            <p id="owner-status"></p>
+        <section class="ap-bloc">
+            <h2>Qui sommes-nous ?</h2>
+            <p>MR PAPRIKA est une pizzeria située à Angré Nouveau CHU, à Abidjan. Nous préparons des pizzas artisanales et nous vous les proposons sur place, à emporter ou en livraison.</p>
+            <p>Parcourez notre menu, composez votre commande en quelques clics et recevez-la rapidement.</p>
+            <a class="ap-cta" href="index.html#menu">Voir le menu</a>
         </section>
 
-        <section class="owner-notifications">
-            <h3>Notifications de Commandes</h3>
-            <p id="order-notification-count">Aucune nouvelle commande.</p>
-            <ul id="order-notifications-list"></ul>
-            <button id="clear-order-notifications">Marquer toutes comme lues</button>
+        <section class="ap-bloc">
+            <h2>Comment commander ?</h2>
+            <ol class="ap-etapes">
+                <li><span>Choisissez vos plats dans le menu, avec la taille et les suppléments de votre choix.</span></li>
+                <li><span>Ajoutez-les au panier, puis indiquez votre nom, votre téléphone et, pour une livraison, votre adresse.</span></li>
+                <li><span>Envoyez votre commande sur WhatsApp : nous la confirmons et nous la préparons.</span></li>
+            </ol>
+            <p>Un doute ? Appelez-nous ou écrivez-nous avec les boutons en bas de l'écran.</p>
         </section>
 
-        <section class="owner-chat">
-            <h3>Messages des Clients</h3>
-            <div id="owner-chat-messages"></div>
-            <button id="clear-chat">Effacer tous les messages</button>
+        <section class="ap-bloc" id="location">
+            <h2>Nous trouver</h2>
+            <div class="location-info">
+                <h3>Adresse</h3>
+                <p><i class="fas fa-map-pin" aria-hidden="true"></i> <span id="owner-address-display"></span></p>
+                <h3>Contact</h3>
+                <p><i class="fas fa-phone" aria-hidden="true"></i> <span id="owner-phone-display"></span></p>
+            </div>
+            <div id="map-container"></div>
+        </section>
+
+        <section class="ap-bloc" id="reseaux-bloc" hidden>
+            <h2>Suivez-nous</h2>
+            <div class="ap-reseaux" id="reseaux"></div>
         </section>
     </main>
     <footer>
         <p>&copy; 2026 MR PAPRIKA</p>
     </footer>
-    <script src="script.js"></script>
+
+    <script>
+        // Liens des réseaux sociaux : collez l'adresse complète (https://...) entre les guillemets.
+        // Laissez vide ("") pour ne rien afficher.
+        var LIENS = {
+            Instagram: "",
+            Facebook: "",
+            TikTok: ""
+        };
+        var ICONES = { Instagram: "fab fa-instagram", Facebook: "fab fa-facebook-f", TikTok: "fab fa-tiktok" };
+        (function () {
+            var box = document.getElementById("reseaux"), n = 0;
+            Object.keys(LIENS).forEach(function (nom) {
+                var url = LIENS[nom];
+                if (!/^https:\/\//.test(url)) return;
+                var a = document.createElement("a");
+                a.href = url; a.target = "_blank"; a.rel = "noopener";
+                var i = document.createElement("i"); i.className = ICONES[nom]; i.setAttribute("aria-hidden", "true");
+                a.append(i, document.createTextNode(" " + nom));
+                box.appendChild(a); n++;
+            });
+            if (n) document.getElementById("reseaux-bloc").hidden = false;
+        })();
+    </script>
+    <script src="contact.js"></script>
 </body>
 </html>
