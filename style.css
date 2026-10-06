@@ -1772,3 +1772,28 @@ footer p {
 .pizza-card.selected::before {
     opacity: 1;
 }
+/* === Logo MR PAPRIKA dans l'en-tête (à coller à la FIN de style.css) === */
+header{
+  background:radial-gradient(circle at 50% 0%,#3d1008 0%,#0b1014 70%) !important;
+  text-align:center;
+  padding-top:14px;
+}
+header::before{
+  content:"";
+  display:block;
+  width:170px;
+  height:170px;
+  margin:6px auto 10px;
+  background:url("images/logo.png") center/contain no-repeat;
+  border-radius:50%;
+  box-shadow:0 0 0 3px #b3260e,0 10px 30px rgba(179,38,14,.55);
+}
+/* Le logo contient déjà le nom : on garde le titre pour Google, mais on le cache à l'écran */
+header h1{
+  position:absolute;width:1px;height:1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;
+}
+header .tagline{color:#fff;margin:8px 0 14px}
+@media (max-width:600px){
+  header::before{width:130px;height:130px}
+}
